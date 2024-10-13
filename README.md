@@ -27,5 +27,44 @@ Ensure you have the following installed:
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/kafka-docker-cluster.git
+git clone https://github.com/moiseshernandez27/Kafka-Python.git
 cd kafka-docker-cluster
+docker-compose up -d
+```
+This will spin up the following services:
+
+3 Kafka Controllers (Ports: 9093)
+3 Kafka Brokers:
+Broker 1 (External Port: 29092)
+Broker 2 (External Port: 39092)
+Broker 3 (External Port: 49092)
+
+###  Step 3: Check Status
+You can check the status of the containers using:
+
+```bash
+docker ps
+
+```
+
+### Step 4:Produce Messages to Kafka with Python
+First, install the Python Kafka client and then run the script:
+
+```bash
+pip install kafka-python
+python kafka_producer.py
+```
+This will send a message to the Kafka topic my-topic.
+
+## ⚙️ Configuration Details
+
+Controllers: 🛠️ The controllers manage metadata and leader elections for Kafka. They communicate on port 9093.
+Brokers: 🗄️ Kafka brokers handle messages and client requests. Each broker is exposed on a separate port:
+Broker 1: External port 29092
+Broker 2: External port 39092
+Broker 3: External port 49092
+
+## 📁 Files
+
+docker-compose.yml: Defines the services (Kafka controllers and brokers) for the cluster.
+kafka_producer.py: Python script for sending messages to Kafka.
