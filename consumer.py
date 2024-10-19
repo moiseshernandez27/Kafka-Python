@@ -1,4 +1,7 @@
-from confluent_kafka import Consumer, KafkaException, KafkaError
+from confluent_kafka import Consumer, KafkaException, KafkaError  # type: ignore
+from fastapi import FastAPI  # type: ignore
+
+app = FastAPI()
 
 # Kafka consumer configuration
 conf = {
@@ -7,27 +10,39 @@ conf = {
     'auto.offset.reset': 'earliest',  # Start from the earliest message
 }
 
-# Create Consumer instance
-consumer = Consumer(**conf)
+@app.get("/consume")
+async def consume_all_kafka():
+    # Create a new Consumer instance for each request
+    consumer = Consumer(conf)
+    topic = 'test_topic'
+    consumer.subscribe([topic])
+    
+    messages = []
+    try:
+        for _ in range(10):  # Limit to 10 messages (adjust as needed)
+            msg = consumer.poll(1.0)  # Poll messages with a timeout of 1 second
+            if msg is None:
+                break  
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    continue
+                else:
+                    raise KafkaException(msg.error())
+            # Append the message to the list
+            messages.append({
+                'key': msg.key().decode('utf-8') if msg.key() else None,
+                'value': msg.value().decode('utf-8') if msg.value() else None,
+                'topic': msg.topic(),
+                'partition': msg.partition(),
+                'offset': msg.offset()
+            })
+    except KafkaException as e:
+        print(f"Kafka error: {e}")
+    finally:
+        consumer.close() 
 
-# Subscribe to the topic
-consumer.subscribe(['test_topic'])
+    return {"messages": messages}
 
-# Poll for new messages
-try:
-    while True:
-        msg = consumer.poll(1.0)  # Poll for messages with a 1-second timeout
-        if msg is None:
-            continue
-        if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                # End of partition
-                continue
-            else:
-                raise KafkaException(msg.error())
-        print(f"Received message: {msg.value().decode('utf-8')} from topic: {msg.topic()}")
-
-except KeyboardInterrupt:
-    print("Stopping consumer...")
-finally:
-    consumer.close()
+@app.get("/test")
+async def show_test_message():
+    return {"message": "this is a test"}

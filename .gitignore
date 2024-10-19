@@ -1,1 +1,5 @@
 .venv
+.env
+kafka-venv
+_pycache_
+__pycache__/
